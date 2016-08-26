@@ -28,7 +28,7 @@
 
         })
 
-        .value('API_BASE_URL', window.location.protocol + "//" + location.hostname + ':8081/')
+        .value('API_BASE_URL', window.location.protocol + "//" + location.hostname)
         .value('BOARD_SIZE', 10)
         .factory('GameService', function ($resource, API_BASE_URL) {
             return $resource(
