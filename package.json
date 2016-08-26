@@ -16,6 +16,9 @@
   "bugs": {
     "url": "https://github.com/eugeniol/ng-battleship/issues"
   },
+  "engines": {
+    "node": "6.2.2"
+  },
   "homepage": "https://github.com/eugeniol/ng-battleship#readme",
   "dependencies": {
     "body-parser": "^1.15.2",
