@@ -9,7 +9,7 @@
                     views: {
                         'content@': {
                             templateUrl: 'views/main.html',
-                            controller: 'ShopController'
+                            controller: 'HomeController'
                         }
                     }
                 })
@@ -27,27 +27,7 @@
             $urlRouterProvider.otherwise('/')
 
         })
-
-        .value('API_BASE_URL', window.location.protocol + "//" + location.hostname)
         .value('BOARD_SIZE', 10)
-        .factory('GameService', function ($resource, API_BASE_URL) {
-            return $resource(
-                API_BASE_URL + 'game/:gameId/:playerId',
-                {
-                    gameId: '@gameId',
-                    playerId: '@playerId'
-                },
-                {
-                    shoot: {
-                        method: 'POST'
-                    },
-                    check: {
-                        method: 'GET',
-                        url: API_BASE_URL + 'game/:gameId/:playerId/check',
-                        isArray: true
-                    }
-                })
-        })
         .factory('BoardService', function (BOARD_SIZE) {
             return {
                 createBoard: function (ships) {
@@ -97,15 +77,15 @@
                 }
             }
         })
-        .controller("ShopController", function ($scope) {
+        .controller("HomeController", function ($scope) {
             $scope.gameId = _.uniqueId();
         })
-        .controller('GameDetailController', function ($scope, $stateParams, GameService, BoardService, $interval) {
+        .controller('GameDetailController', function ($scope, $stateParams, BoardService, $timeout) {
             var gameId = $stateParams.gameId;
             var playerId = $stateParams.playerId;
-
             var socket = io();
             var lastShoot = null
+
             $scope.rockets = []
 
             socket.on('game error', function (err) {
@@ -118,9 +98,27 @@
 
                 $scope.rockets.unshift(rocket)
 
+                var board = playerId == rocket.playerId ? $scope.yourBoard : $scope.myBoard
+                board[rocket.y][rocket.x].rocket = rocket
                 $scope.$digest();
 
                 lastShoot = null
+            })
+
+            socket.on('player ships', function (ships) {
+                console.log(ships)
+                $scope.myBoard = BoardService.createBoard(ships)
+                $scope.$digest();
+            })
+
+            socket.on('waiting opponent', function (rocket) {
+                $scope.status = "Wating opponent"
+                $scope.$digest();
+            })
+
+            socket.on('game start', function (rocket) {
+                $scope.status = ""
+                $scope.$digest();
             })
 
             socket.on('turn on', function (rocket) {
@@ -133,8 +131,9 @@
                 $scope.$digest();
             })
 
-
-            socket.emit('start game', {gameId: gameId, playerId: playerId})
+            $timeout(function () {
+                socket.emit('start game', {gameId: gameId, playerId: playerId})
+            }, 1000)
 
 
             $scope.shootShip = function (cel) {
@@ -146,14 +145,6 @@
                 })
                 lastShoot = cel;
             }
-
-
-            GameService
-                .get($stateParams).$promise
-                .then(function (ret) {
-                    $scope.myBoard = BoardService.createBoard(ret.ships)
-
-                })
 
 
             $scope.yourBoard = BoardService.createBoard()

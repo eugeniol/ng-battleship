@@ -5,7 +5,7 @@
     </tr>
     <tr ng-repeat="rows in board">
         <th>{{ labels.y[ $index]}}</th>
-        <td ng-repeat="cel in rows" ng-class="{ship: showShips  && cel.ship, hit: cel.rocket.status=='HIT'}"
+        <td ng-repeat="cel in rows" ng-class="{ship: showShips  && cel.ship, hit: cel.rocket.status=='HIT', miss: cel.rocket.status=='MISS'}"
             ng-click="select(cel)">
             <span ng-if="cel.shoot">X</span>
         </td>

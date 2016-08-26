@@ -1,8 +1,15 @@
 <div class="row">
+    <div class="alert alert-info" ng-if="status">
+        {{status}}
+    </div>
+</div>
+
+<div class="row">
     <div class="alert alert-success" ng-if="isTurn">
         is your turn to shoot
     </div>
 </div>
+
 <div class="row">
     <div class="col-md-4">
         <board ng-if="myBoard" class="my-board" ng-model="myBoard" show-ships="true"></board>
