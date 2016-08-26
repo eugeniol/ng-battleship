@@ -79,6 +79,8 @@ io.on('connection', function (socket) {
     });
 });
 
+var port = process.env.PORT || 8081;
 
-http.listen('80')
+
+http.listen(port)
 
