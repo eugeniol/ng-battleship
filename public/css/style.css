@@ -27,3 +27,10 @@ td.hit{
 td.miss{
     background: blue;
 }
+
+.turn .your-board table {
+    background: #eee;
+}
+.turn .your-board td {
+    cursor: pointer;
+}

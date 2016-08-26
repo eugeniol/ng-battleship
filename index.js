@@ -13,16 +13,17 @@ io.on('connection', function (socket) {
 
     socket.on('start game', function (data) {
         playerData = game.getPlayerData(data.playerId);
+        console.log("user connected")
 
         playerData.online = true;
         playerData.socket = socket;
 
         if (_.every(game.players, (it) => it.online)) {
-            game.current().socket.emit('game start')
+            io.emit('game start')
             game.current().socket.emit('turn on')
         }
         else {
-            game.current().socket.emit('waiting opponent')
+            socket.emit('waiting opponent')
         }
 
         socket.emit('player ships', playerData.ships)
@@ -30,19 +31,45 @@ io.on('connection', function (socket) {
 
 
     socket.on('fire rocket', function (data) {
+        var playerId = data.playerId,
+            coords = [data.y, data.x],
+            current = game.current(),
+            opponent = game.opponent();
 
-        var playerId = data.playerId, coords = [data.y, data.x]
+        console.log("fire rocket", data)
 
-        try {
-            var rocket = game.shoot(playerId, coords)
+        if (game.isValidTurn(playerId)) {
+            console.log("turn valid")
+            var rocket = current.fire(coords)
+            opponent.receive(rocket)
+
+            io.emit('rocket done', rocket)
+
+            if (rocket.hasHit()) {
+                socket.emit('rocket hit')
+
+                opponent.socket.emit('turn off')
+                current.socket.emit('turn on')
+
+                if (opponent.isGameOver()) {
+                    io.emit('game over', {winner: playerId})
+                    this.winner = current
+                }
+            }
+            else {
+                socket.emit('rocket fail')
+                current.socket.emit('turn off')
+                opponent.socket.emit('turn on')
+
+                game.next()
+            }
 
 
-            io.emit('rocket done', rocket);
         }
-        catch (err) {
-            console.log(err)
-            socket.emit('game error', err);
+        else {
+            socket.emit('game error', {message: "Is not your turn"});
         }
+
 
     })
     socket.on('disconnect', function () {

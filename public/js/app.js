@@ -84,7 +84,6 @@
             var gameId = $stateParams.gameId;
             var playerId = $stateParams.playerId;
             var socket = io();
-            var lastShoot = null
 
             $scope.rockets = []
 
@@ -92,9 +91,19 @@
                 alert(JSON.stringify(err))
             })
 
+            socket.on('rocket hit', function (rocket) {
+                $scope.status = "your rocket hit! fire again!"
+                $scope.$digest();
+
+            })
+            socket.on('rocket fail', function (rocket) {
+                $scope.status = "your rocket fail, wating opponent"
+                $scope.$digest();
+
+            })
+
+
             socket.on('rocket done', function (rocket) {
-                if (lastShoot)
-                    lastShoot.rocket = rocket
 
                 $scope.rockets.unshift(rocket)
 
@@ -102,17 +111,23 @@
                 board[rocket.y][rocket.x].rocket = rocket
                 $scope.$digest();
 
-                lastShoot = null
             })
 
             socket.on('player ships', function (ships) {
-                console.log(ships)
                 $scope.myBoard = BoardService.createBoard(ships)
                 $scope.$digest();
             })
 
             socket.on('waiting opponent', function (rocket) {
                 $scope.status = "Wating opponent"
+                $scope.$digest();
+            })
+
+            socket.on('game over', function (data) {
+                $scope.isTurn = false
+
+                $scope.status = "Game Over player  " +
+                    data.winner + " has won"
                 $scope.$digest();
             })
 
@@ -137,13 +152,13 @@
 
 
             $scope.shootShip = function (cel) {
-                socket.emit('fire rocket', {
-                    gameId: gameId,
-                    playerId: playerId,
-                    x: cel.x,
-                    y: cel.y
-                })
-                lastShoot = cel;
+                if ($scope.isTurn)
+                    socket.emit('fire rocket', {
+                        gameId: gameId,
+                        playerId: playerId,
+                        x: cel.x,
+                        y: cel.y
+                    })
             }
 
 
