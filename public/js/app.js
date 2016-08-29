@@ -78,7 +78,8 @@
             }
         })
         .controller("HomeController", function ($scope) {
-            $scope.gameId = _.uniqueId();
+            $scope.gameId = _.random(1000, 9999)
+
         })
         .controller('GameDetailController', function ($scope, $stateParams, BoardService, $timeout) {
             var gameId = $stateParams.gameId;

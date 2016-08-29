@@ -1,2 +1,6 @@
 # ng-battleship
-Demo Battleship Angular
+
+Battleship Game made in Angular and Node Js using web sockets
+
+
+

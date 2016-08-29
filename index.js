@@ -1,18 +1,35 @@
-const BattleshipGame = require('./lib/BattleshipGame')
+const BattleshipGame = require('./lib/BattleshipGame').BattleshipGame
+const GameFactory = require('./lib/BattleshipGame').GameFactory
+
 const express = require('express');
 const _ = require('lodash');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
+
 app.use(express.static(__dirname + '/public'));
+
+var gameFactory = new GameFactory(BattleshipGame);
+
+app.get('/status', function (req, res, next) {
+    var data = {
+        totalGames: _.size(gameFactory._games),
+        gamesId: _.keys(gameFactory._games)
+    }
+    res.send(data)
+    next()
+})
 
 io.on('connection', function (socket) {
     var playerData;
-    var game = BattleshipGame.getInstance();
 
     socket.on('start game', function (data) {
-        playerData = game.getPlayerData(data.playerId);
+        var playerId = data.playerId;
+
+        var game = gameFactory.getInstance(data)
+        playerData = game.getPlayerData(playerId);
+
         console.log("user connected")
 
         playerData.online = true;
@@ -31,7 +48,8 @@ io.on('connection', function (socket) {
 
 
     socket.on('fire rocket', function (data) {
-        var playerId = data.playerId,
+        var game = gameFactory.getInstance(data),
+            playerId = data.playerId,
             coords = [data.y, data.x],
             current = game.current(),
             opponent = game.opponent();
@@ -53,6 +71,7 @@ io.on('connection', function (socket) {
 
                 if (opponent.isGameOver()) {
                     io.emit('game over', {winner: playerId})
+                    gameFactory.removeInstance(data)
                     this.winner = current
                 }
             }
@@ -69,8 +88,6 @@ io.on('connection', function (socket) {
         else {
             socket.emit('game error', {message: "Is not your turn"});
         }
-
-
     })
     socket.on('disconnect', function () {
         console.log('user disconnected');
@@ -78,6 +95,7 @@ io.on('connection', function (socket) {
             delete playerData.socket
     });
 });
+
 
 var port = process.env.PORT || 8080;
 http.listen(port)
